@@ -48,9 +48,10 @@ SCENES = [
         "DrumHarderRows",
         effects=[
             example.SolidBackground(color=(60,0,0)),
-            bitmap.StaticBitmap(bitmap.CACHED_WORDS['DRUM HARDER'], (100,100,100), -1, 1),
+            #bitmap, colors, direction, top_row, left_col=None
+            bitmap.MidiFadingBitmap(bitmap.CACHED_WORDS['DRUM HARDER'], [(60,c,c) for c in range(255,0,-50)], -1, 1),
             #example.MovingColor()
-            MidiLauncher(midi_effects.DrumHitRow)
+            #DMidiLauncher(midi_effects.DrumHitRow)
         ]
     ),
     Scene(

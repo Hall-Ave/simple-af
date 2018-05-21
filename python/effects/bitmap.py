@@ -3,6 +3,7 @@ import numpy as np
 from collections import namedtuple
 from animation_framework.model import Effect, Scene, MultiEffect
 from animation_framework.state import STATE
+from animation_framework.midi_utils import AbstractMidiListener
 
 #Name is just for easier print/debugging
 Bitmap = namedtuple("Bitmap", ["name", "height", "width", "bitmap"])
@@ -95,6 +96,48 @@ class FlashBitmap(Effect):
 
     def is_completed(self, t):
         return self.timer < 0
+
+
+class ColorChangingBitmap(Effect):
+    def __init__(self, bitmap, colors, direction, top_row, left_col=None):
+        Effect.__init__(self)
+        self.idx = 0
+        self.colors = colors
+        self.bitmap = bitmap
+        left_col = left_col if left_col != None else computeCenteredLeft(bitmap)
+        left_offset = left_col if direction > 0 else STATE.layout.rows - left_col
+        self.pointcloud = map(lambda point: [point[0] * direction + left_offset, point[1] + top_row], bitmap.bitmap)
+
+    def next_frame(self, pixels, t):
+        #TODO: speed me up
+        print "IN ColorChangingBitmap nextframe"
+
+        print(self.idx, self.colors[self.idx])
+        for point in self.pointcloud:
+            pixels[point[0], point[1]] = self.colors[self.idx]
+        self.idx += 1
+
+    def is_completed(self, t):
+        return self.idx >= len(self.colors)
+
+
+class MidiFadingBitmap(ColorChangingBitmap, AbstractMidiListener):
+    #TODO - inherit?
+    def __init__(self, bitmap, colors, direction, top_row, left_col=None):
+        ColorChangingBitmap.__init__(self, bitmap, colors, direction, top_row, left_col)
+        AbstractMidiListener.__init__(self)
+
+    def next_frame(self, pixels, t):
+        super(MidiFadingBitmap, self).next_frame(pixels, t)
+
+    def process_note(self, pixels, t, data):
+        print(data)
+        self.idx = max(0, self.idx-2)
+
+    def is_completed(self, t):
+        self.idx = min(self.idx, len(self.colors)-1)
+        return False
+
 
 class DrawMovingBitmap(Effect):
     def __init__(self, bitmap, color, direction=-1, top_row=0):

@@ -47,8 +47,12 @@ def _forward_midi(port=None, virtual=None):
 DrumHit = namedtuple("DrumHit", ["note", "velocity"])
 
 
-class AbstractMidiListener(MultiEffect):
-    def before_rendering(self, pixels, t):
+class AbstractMidiListener(Effect):
+    def __init__(self, *args, **kwargs):
+        super(AbstractMidiListener, self).__init__()
+
+    def next_frame(self, pixels, t):
+        print "IN AbstractMidiListener nextframe"
         super(AbstractMidiListener, self).before_rendering(pixels, t)
         for data in STATE.osc_data.current['midi']:
             self.process_note(pixels, t, data)
@@ -59,9 +63,10 @@ class AbstractMidiListener(MultiEffect):
 
 #Concrete implementation for midi listener. Pass a function to handle the data
 #(There is probably a cleaner pythonic way to do this)
-class MidiLauncher(AbstractMidiListener):
+class MidiLauncher(AbstractMidiListener, MultiEffect):
     def __init__(self, factory):
         AbstractMidiListener.__init__(self)
+        MultiEffect.__init__(self)
         self.factory = factory
 
     def process_note(self, pixels, t, data):
